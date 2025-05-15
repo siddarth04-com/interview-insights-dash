@@ -1,12 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
-import { LineChart, Activity, Award } from "lucide-react";
+import { Activity, Award, LineChart } from "lucide-react";
 import AnalyticsCard from "@/components/Dashboard/AnalyticsCard";
 import ScoreTrendChart from "@/components/Dashboard/ScoreTrendChart";
 import LoadingState from "@/components/Dashboard/LoadingState";
 import { useToast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ScoreData {
   date: string;
@@ -19,6 +18,24 @@ interface UserAnalytics {
   scoreTrend: ScoreData[];
 }
 
+// Mock data for demonstration
+const mockAnalytics: UserAnalytics = {
+  interviewsTaken: 12,
+  averageScore: 78.5,
+  scoreTrend: [
+    { date: "2025-01-05", score: 65 },
+    { date: "2025-01-15", score: 70 },
+    { date: "2025-02-01", score: 68 },
+    { date: "2025-02-15", score: 72 },
+    { date: "2025-03-01", score: 75 },
+    { date: "2025-03-15", score: 80 },
+    { date: "2025-04-01", score: 78 },
+    { date: "2025-04-15", score: 82 },
+    { date: "2025-05-01", score: 85 },
+    { date: "2025-05-10", score: 79 }
+  ]
+};
+
 const Index = () => {
   const [analytics, setAnalytics] = useState<UserAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,39 +43,31 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // In a real app, you'd get the userId from authentication
-    const userId = "currentUserId";
-    
-    const unsubscribe = onSnapshot(
-      doc(db, "Analytics", userId),
-      (doc) => {
-        if (doc.exists()) {
-          setAnalytics(doc.data() as UserAnalytics);
-          setLoading(false);
-        } else {
-          setError("No data found for this user");
-          setLoading(false);
-          toast({
-            title: "Data not found",
-            description: "We couldn't find your analytics data.",
-            variant: "destructive",
-          });
-        }
-      },
-      (error) => {
-        console.error("Error fetching analytics:", error);
-        setError("Failed to load data. Please try again later.");
+    // Simulate loading data
+    const timer = setTimeout(() => {
+      try {
+        // Use mock data
+        setAnalytics(mockAnalytics);
+        setLoading(false);
+        
+        toast({
+          title: "Data loaded successfully",
+          description: "Using demonstration data for preview.",
+          variant: "default",
+        });
+      } catch (error) {
+        console.error("Error setting up mock data:", error);
+        setError("Failed to load demonstration data");
         setLoading(false);
         toast({
           title: "Error loading data",
-          description: error.message,
+          description: "Could not load demonstration data",
           variant: "destructive",
         });
       }
-    );
+    }, 1500); // Simulate network delay
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => clearTimeout(timer);
   }, [toast]);
 
   if (loading) {
@@ -74,11 +83,11 @@ const Index = () => {
     return (
       <div className="container mx-auto py-8 px-4 md:px-6">
         <h1 className="text-3xl font-bold mb-8">Interview Performance</h1>
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <p className="text-red-700">
-            {error} Please check your connection and try again.
-          </p>
-        </div>
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>
+            {error} Please refresh the page to try again.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -102,6 +111,16 @@ const Index = () => {
               : "0%"
           }
           icon={<Award className="h-5 w-5" />}
+          isLoading={loading}
+        />
+        <AnalyticsCard
+          title="Latest Score"
+          value={
+            analytics?.scoreTrend && analytics.scoreTrend.length > 0
+              ? `${analytics.scoreTrend[analytics.scoreTrend.length - 1].score}%`
+              : "N/A"
+          }
+          icon={<LineChart className="h-5 w-5" />}
           isLoading={loading}
         />
       </div>
