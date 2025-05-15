@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface ScoreData {
   date: string;
@@ -31,16 +31,29 @@ const CustomTooltip = ({
   label,
 }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 border rounded-md shadow-md">
-        <p className="font-medium text-sm">
-          Date: {format(new Date(label), "dd MMM yyyy")}
-        </p>
-        <p className="text-primary font-bold">
-          Score: {payload[0].value?.toFixed(1)}
-        </p>
-      </div>
-    );
+    try {
+      const date = parseISO(label);
+      return (
+        <div className="bg-white p-3 border rounded-md shadow-md">
+          <p className="font-medium text-sm">
+            Date: {format(date, "dd MMM yyyy")}
+          </p>
+          <p className="text-primary font-bold">
+            Score: {payload[0].value?.toFixed(1)}
+          </p>
+        </div>
+      );
+    } catch (error) {
+      // Fallback for invalid dates
+      return (
+        <div className="bg-white p-3 border rounded-md shadow-md">
+          <p className="font-medium text-sm">Date: {label}</p>
+          <p className="text-primary font-bold">
+            Score: {payload[0].value?.toFixed(1)}
+          </p>
+        </div>
+      );
+    }
   }
   return null;
 };
@@ -52,7 +65,7 @@ const ScoreTrendChart: React.FC<ScoreTrendChartProps> = ({
   // Format the timestamps to readable dates for X-axis
   const formattedData = data.map((item) => ({
     ...item,
-    formattedDate: format(new Date(item.date), "dd/MM"),
+    formattedDate: format(parseISO(item.date), "dd/MM"),
   }));
 
   return (
