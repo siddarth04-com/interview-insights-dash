@@ -1,11 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Activity, Award, LineChart } from "lucide-react";
+import { Activity, Award, LineChart, Trophy } from "lucide-react";
+import { Link } from "react-router-dom";
 import AnalyticsCard from "@/components/Dashboard/AnalyticsCard";
 import ScoreTrendChart from "@/components/Dashboard/ScoreTrendChart";
 import LoadingState from "@/components/Dashboard/LoadingState";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 interface ScoreData {
   date: string;
@@ -94,7 +96,16 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
-      <h1 className="text-3xl font-bold mb-8">Interview Performance</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Interview Performance</h1>
+        
+        <Link to="/leaderboard">
+          <Button variant="outline" className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" />
+            View Leaderboard
+          </Button>
+        </Link>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
         <AnalyticsCard
