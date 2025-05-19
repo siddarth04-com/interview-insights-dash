@@ -9,6 +9,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Interview from "./pages/Interview";
 import Analysis from "./pages/Analysis";
 import NotFound from "./pages/NotFound";
+import VideoPlayerDemo from "./pages/VideoPlayerDemo";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { ThemeToggle } from "./components/ThemeToggle";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/interview" element={<Interview />} />
             <Route path="/analysis/:sessionId" element={<Analysis />} />
+            <Route path="/videos" element={<VideoPlayerDemo />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
