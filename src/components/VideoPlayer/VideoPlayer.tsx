@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Maximize, Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Maximize } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 interface VideoPlayerProps {
