@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -186,7 +185,7 @@ export default function PersonalizedRecommendations({
       </CardContent>
       {isRecommendationsGenerated && (
         <CardFooter className="bg-muted/50 pt-4">
-          <Alert variant="info" className="w-full">
+          <Alert variant="default" className="w-full">
             <AlertDescription>
               These recommendations are generated using AI and should be considered alongside your own study plan.
             </AlertDescription>
