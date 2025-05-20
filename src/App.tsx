@@ -11,30 +11,30 @@ import Analysis from "./pages/Analysis";
 import NotFound from "./pages/NotFound";
 import VideoPlayerDemo from "./pages/VideoPlayerDemo";
 import { ThemeProvider } from "./components/ThemeProvider";
-import { ThemeToggle } from "./components/ThemeToggle";
+import MainNavigation from "./components/Navigation/MainNavigation";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider defaultTheme="light">
+  <ThemeProvider defaultTheme="system">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="absolute top-4 right-4 z-10">
-          <ThemeToggle />
-        </div>
+        <BrowserRouter>
+          <MainNavigation />
+          <div className="pt-16">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/interview" element={<Interview />} />
+              <Route path="/analysis/:sessionId" element={<Analysis />} />
+              <Route path="/videos" element={<VideoPlayerDemo />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </BrowserRouter>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/interview" element={<Interview />} />
-            <Route path="/analysis/:sessionId" element={<Analysis />} />
-            <Route path="/videos" element={<VideoPlayerDemo />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   </ThemeProvider>

@@ -99,4 +99,34 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Improved text contrast for dark mode */
+  .dark .text-muted-foreground {
+    @apply text-slate-300;
+  }
+  
+  .dark .card-description {
+    @apply text-slate-300;
+  }
+  
+  /* Make links more visible in dark mode */
+  .dark a:not(.btn):not([role="button"]):not(.no-underline) {
+    @apply text-blue-400 hover:text-blue-300;
+  }
+  
+  /* Improve button visibility in dark mode */
+  .dark .btn-outline {
+    @apply border-slate-600 hover:bg-slate-700;
+  }
 }
+
+/* Add padding to account for the fixed navigation */
+.container, .content-container {
+  @apply pt-4;
+}
+
+/* Custom utility classes */
+.glass-card {
+  @apply bg-background/80 backdrop-blur-sm border border-border;
+}
+
