@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -17,21 +16,51 @@ const REAL_QUESTIONS = {
     "How would you balance development needs with environmental conservation in your administrative decisions?",
     "Explain your approach to handling a situation where local interests conflict with national policy directives.",
     "How would you ensure transparency and accountability in the implementation of welfare schemes?",
-    "Discuss the challenges in implementing Right to Education Act in rural areas and your strategies to address them."
+    "Discuss the challenges in implementing Right to Education Act in rural areas and your strategies to address them.",
+    "What measures would you take to improve the agricultural productivity in drought-prone regions?",
+    "How would you address the issue of urban migration and its impact on rural development?",
+    "Discuss the role of civil servants in disaster management with specific examples.",
+    "How would you promote gender equality and women's empowerment in your administrative area?",
+    "What strategies would you implement to improve health infrastructure in remote areas?",
+    "Discuss the challenges in implementing social welfare schemes and your approach to addressing them.",
+    "How would you leverage technology to improve governance and public service delivery?",
+    "What measures would you take to promote sustainable tourism while preserving local culture and environment?",
+    "Discuss your approach to handling communal tensions in a diverse district under your administration.",
+    "How would you address the issue of corruption in public service delivery systems?"
   ],
   "NDA": [
     "Describe a situation where you had to make a difficult decision under pressure. How did you handle it?",
     "What motivates you to join the armed forces despite the hardships and personal sacrifices involved?",
     "How would you maintain discipline and morale among your unit during extended periods of difficult deployment?",
     "Describe how you would approach leading a diverse team with members from different cultural backgrounds.",
-    "How do you view the evolving role of technology in modern warfare and defense strategies?"
+    "How do you view the evolving role of technology in modern warfare and defense strategies?",
+    "What measures would you take to ensure the physical and mental wellbeing of personnel under your command?",
+    "How would you handle a situation where you need to enforce an unpopular decision among your subordinates?",
+    "Discuss your understanding of the strategic importance of India's maritime boundaries.",
+    "How would you foster camaraderie and team spirit in a newly formed unit?",
+    "What qualities do you think are essential for an officer in the armed forces and why?",
+    "How would you balance operational security with the need for transparency in your communications?",
+    "Discuss a historical military campaign or leadership that has inspired you and why.",
+    "How would you adapt traditional military strategies to counter asymmetric threats?",
+    "What role do you think the armed forces should play in disaster relief and humanitarian operations?",
+    "How would you address issues of stress and mental health among personnel in high-pressure situations?"
   ],
   "State PSC": [
     "How would you address the issue of water management in drought-prone areas within your state?",
     "Discuss your strategy for improving the implementation of public welfare schemes at the grassroots level.",
     "How would you balance regional development disparities while working within budgetary constraints?",
     "What measures would you take to improve the quality of education in government schools in your state?",
-    "How would you encourage citizen participation in local governance and development initiatives?"
+    "How would you encourage citizen participation in local governance and development initiatives?",
+    "What strategies would you implement to attract investment and industries to backward regions in your state?",
+    "How would you address the challenges of urban infrastructure development in rapidly growing cities?",
+    "Discuss your approach to implementing healthcare reforms at the district level.",
+    "What steps would you take to improve agricultural productivity and farmer welfare in your state?",
+    "How would you address issues of environmental pollution while promoting industrial development?",
+    "Discuss your strategy for improving law and order in sensitive areas within your jurisdiction.",
+    "What measures would you propose to enhance skill development and employment opportunities for youth?",
+    "How would you tackle the issue of migration from rural to urban areas within your state?",
+    "Discuss your approach to preserving cultural heritage while promoting tourism in your state.",
+    "How would you ensure efficient disaster management and preparedness in vulnerable regions?"
   ]
 };
 

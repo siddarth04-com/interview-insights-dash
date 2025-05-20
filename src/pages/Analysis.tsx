@@ -11,6 +11,7 @@ import CategoryAnalysis from "@/components/Analysis/CategoryAnalysis";
 import FeedbackSuggestions from "@/components/Analysis/FeedbackSuggestions";
 import VideoReplay from "@/components/Analysis/VideoReplay";
 import PerformanceTrendChart from "@/components/Analysis/PerformanceTrendChart";
+import PersonalizedRecommendations from "@/components/Analysis/PersonalizedRecommendations";
 import AnalysisLoading from "@/components/Analysis/AnalysisLoading";
 
 // Mock fetch function (replace with actual Firebase fetch)
@@ -106,10 +107,11 @@ export default function Analysis() {
       </p>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        <TabsList className="grid grid-cols-2 md:grid-cols-6 gap-2">
           <TabsTrigger value="summary">Summary</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
+          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
           {data.hasRecording && (
             <TabsTrigger value="replay">Replay</TabsTrigger>
           )}
@@ -137,6 +139,15 @@ export default function Analysis() {
           <FeedbackSuggestions 
             suggestions={data.improvementSuggestions}
             scores={data.categoryScores}
+          />
+        </TabsContent>
+        
+        <TabsContent value="recommendations" className="space-y-4">
+          <PersonalizedRecommendations 
+            categoryScores={data.categoryScores}
+            weaknesses={data.weaknesses}
+            overallScore={data.overallScore}
+            examType={data.examType}
           />
         </TabsContent>
         
