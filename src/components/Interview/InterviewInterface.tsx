@@ -10,28 +10,28 @@ import QuestionDisplay from "./QuestionDisplay";
 import VideoFeed from "./VideoFeed";
 import TranscriptionPanel from "./TranscriptionPanel";
 
-// Mock questions data
-const MOCK_QUESTIONS = {
+// Real interview questions by exam type
+const REAL_QUESTIONS = {
   "UPSC": [
-    "What are your views on India's current foreign policy approach?",
-    "How would you address the challenges of water scarcity in rural areas?",
-    "Discuss the impact of climate change on Indian agriculture.",
-    "What administrative reforms would you prioritize if given the authority?",
-    "How can technology help in improving governance in India?",
+    "What are the ethical considerations you would keep in mind while implementing a government program in a culturally diverse district?",
+    "How would you balance development needs with environmental conservation in your administrative decisions?",
+    "Explain your approach to handling a situation where local interests conflict with national policy directives.",
+    "How would you ensure transparency and accountability in the implementation of welfare schemes?",
+    "Discuss the challenges in implementing Right to Education Act in rural areas and your strategies to address them."
   ],
   "NDA": [
-    "Why do you want to join the armed forces?",
-    "How would you handle a conflict situation among your team members?",
-    "What qualities make a good military leader?",
-    "How do you stay calm under pressure?",
-    "Discuss a situation where you demonstrated leadership.",
+    "Describe a situation where you had to make a difficult decision under pressure. How did you handle it?",
+    "What motivates you to join the armed forces despite the hardships and personal sacrifices involved?",
+    "How would you maintain discipline and morale among your unit during extended periods of difficult deployment?",
+    "Describe how you would approach leading a diverse team with members from different cultural backgrounds.",
+    "How do you view the evolving role of technology in modern warfare and defense strategies?"
   ],
   "State PSC": [
-    "What are the major development challenges facing this state?",
-    "How would you improve the public service delivery system?",
-    "What strategies would you employ to attract industry to less developed regions?",
-    "How would you balance development needs with environmental concerns?",
-    "Discuss the role of state government in education reform.",
+    "How would you address the issue of water management in drought-prone areas within your state?",
+    "Discuss your strategy for improving the implementation of public welfare schemes at the grassroots level.",
+    "How would you balance regional development disparities while working within budgetary constraints?",
+    "What measures would you take to improve the quality of education in government schools in your state?",
+    "How would you encourage citizen participation in local governance and development initiatives?"
   ]
 };
 
@@ -56,9 +56,8 @@ export default function InterviewInterface({ examType }: InterviewInterfaceProps
 
   // Load questions when component mounts
   useEffect(() => {
-    // In a real app, fetch from Firestore
-    // For now, use mock data
-    const questionsForType = MOCK_QUESTIONS[examType as keyof typeof MOCK_QUESTIONS] || [];
+    // Use our real questions instead of mock data
+    const questionsForType = REAL_QUESTIONS[examType as keyof typeof REAL_QUESTIONS] || [];
     setQuestions(questionsForType);
   }, [examType]);
 
@@ -256,7 +255,11 @@ export default function InterviewInterface({ examType }: InterviewInterfaceProps
               </div>
               
               {/* Question display */}
-              <QuestionDisplay question={questions[currentQuestionIndex] || ""} />
+              <QuestionDisplay 
+                question={questions[currentQuestionIndex] || ""}
+                questionNumber={currentQuestionIndex + 1}
+                totalQuestions={questions.length}
+              />
               
               {/* Transcription area */}
               <TranscriptionPanel 
