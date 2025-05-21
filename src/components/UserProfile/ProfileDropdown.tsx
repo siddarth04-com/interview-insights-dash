@@ -39,10 +39,15 @@ export default function ProfileDropdown() {
     }
   };
   
-  // Get initials from email for avatar fallback
+  // Get display name - prioritize username, fall back to email
+  const getDisplayName = () => {
+    return user.user_metadata?.username || user.email?.split('@')[0] || "User";
+  };
+  
+  // Get initials from display name or email for avatar fallback
   const getInitials = () => {
-    const email = user.email || "";
-    return email.substring(0, 2).toUpperCase();
+    const displayName = getDisplayName();
+    return displayName.substring(0, 2).toUpperCase();
   };
   
   return (
@@ -50,7 +55,7 @@ export default function ProfileDropdown() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar>
-            <AvatarImage src={user.user_metadata?.avatar_url || ""} alt={user.email || "User"} />
+            <AvatarImage src={user.user_metadata?.avatar_url || ""} alt={getDisplayName()} />
             <AvatarFallback>{getInitials()}</AvatarFallback>
           </Avatar>
         </Button>
@@ -58,9 +63,9 @@ export default function ProfileDropdown() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel>
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.email}</p>
+            <p className="text-sm font-medium leading-none">{getDisplayName()}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.user_metadata?.username || user.email}
+              {user.email}
             </p>
             {user.user_metadata?.age && user.user_metadata?.gender && (
               <p className="text-xs leading-none text-muted-foreground mt-1">

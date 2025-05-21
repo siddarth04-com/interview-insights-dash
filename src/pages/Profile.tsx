@@ -10,6 +10,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import AvatarSelector from "@/components/UserProfile/AvatarSelector";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ProfileData {
   id: string;
@@ -29,12 +31,23 @@ export default function Profile() {
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [age, setAge] = useState<string>("");
+  const [gender, setGender] = useState<string>("");
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
 
   useEffect(() => {
     if (!user) {
       navigate("/auth");
       return;
+    }
+
+    // Set initial values from user metadata
+    if (user.user_metadata) {
+      setUsername(user.user_metadata.username || "");
+      setFullName(user.user_metadata.full_name || "");
+      setAvatarUrl(user.user_metadata.avatar_url || "");
+      setAge(user.user_metadata.age ? user.user_metadata.age.toString() : "");
+      setGender(user.user_metadata.gender || "");
     }
 
     const fetchProfile = async () => {
@@ -98,7 +111,9 @@ export default function Profile() {
         data: { 
           username, 
           full_name: fullName,
-          avatar_url: avatarUrl
+          avatar_url: avatarUrl,
+          age: age ? Number(age) : undefined,
+          gender
         }
       });
 
@@ -124,11 +139,10 @@ export default function Profile() {
     setAvatarUrl(url);
   };
 
-  // Get initials from email for avatar fallback
+  // Get initials for avatar fallback
   const getInitials = () => {
-    if (!user) return "";
-    const email = user.email || "";
-    return email.substring(0, 2).toUpperCase();
+    const displayName = username || user?.email?.split('@')[0] || "";
+    return displayName.substring(0, 2).toUpperCase();
   };
 
   if (loading) {
@@ -174,7 +188,7 @@ export default function Profile() {
           )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" value={profileData?.email || ""} disabled />
+            <Input id="email" value={user?.email || ""} disabled />
           </div>
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
@@ -193,6 +207,38 @@ export default function Profile() {
               onChange={(e) => setFullName(e.target.value)} 
               placeholder="Your full name" 
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="age">Age</Label>
+            <Select value={age} onValueChange={setAge}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your age" />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 83 }, (_, i) => i + 18).map((ageOption) => (
+                  <SelectItem key={ageOption} value={ageOption.toString()}>
+                    {ageOption}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="gender">Gender</Label>
+            <RadioGroup value={gender} onValueChange={setGender} className="flex space-x-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="male" id="male" />
+                <Label htmlFor="male">Male</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="female" id="female" />
+                <Label htmlFor="female">Female</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="other" id="other" />
+                <Label htmlFor="other">Other</Label>
+              </div>
+            </RadioGroup>
           </div>
         </CardContent>
         <CardFooter>
