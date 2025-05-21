@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import AvatarSelector from "@/components/UserProfile/AvatarSelector";
 
 interface ProfileData {
   id: string;
@@ -27,6 +28,8 @@ export default function Profile() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [showAvatarSelector, setShowAvatarSelector] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -50,6 +53,7 @@ export default function Profile() {
           setProfileData(data);
           setUsername(data.username || "");
           setFullName(data.full_name || "");
+          setAvatarUrl(data.avatar_url || "");
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -72,23 +76,38 @@ export default function Profile() {
     setUpdating(true);
     
     try {
+      const updates = {
+        username,
+        full_name: fullName,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Update profile in database
       const { error } = await supabase
         .from("profiles")
-        .update({
-          username,
-          full_name: fullName,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updates)
         .eq("id", user.id);
 
       if (error) {
         throw error;
       }
 
+      // Update user metadata
+      await supabase.auth.updateUser({
+        data: { 
+          username, 
+          full_name: fullName,
+          avatar_url: avatarUrl
+        }
+      });
+
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully.",
       });
+      
+      setShowAvatarSelector(false);
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
@@ -99,6 +118,10 @@ export default function Profile() {
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleSelectAvatar = (url: string) => {
+    setAvatarUrl(url);
   };
 
   // Get initials from email for avatar fallback
@@ -124,16 +147,31 @@ export default function Profile() {
     <div className="container mx-auto py-8 px-4 md:px-6">
       <Card className="w-full max-w-md mx-auto">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={profileData?.avatar_url || ""} />
-              <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
-            </Avatar>
+          <div className="flex flex-col items-center mb-4">
+            <div className="relative">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback className="text-2xl">{getInitials()}</AvatarFallback>
+              </Avatar>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="absolute -bottom-2 -right-2 rounded-full h-8 w-8 p-0"
+                onClick={() => setShowAvatarSelector(!showAvatarSelector)}
+              >
+                {showAvatarSelector ? "×" : "✏️"}
+              </Button>
+            </div>
           </div>
           <CardTitle>Your Profile</CardTitle>
           <CardDescription>View and edit your profile information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {showAvatarSelector && (
+            <div className="mb-6">
+              <AvatarSelector selected={avatarUrl} onSelect={handleSelectAvatar} />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" value={profileData?.email || ""} disabled />
