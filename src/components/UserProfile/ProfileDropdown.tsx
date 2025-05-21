@@ -62,6 +62,11 @@ export default function ProfileDropdown() {
             <p className="text-xs leading-none text-muted-foreground">
               {user.user_metadata?.username || user.email}
             </p>
+            {user.user_metadata?.age && user.user_metadata?.gender && (
+              <p className="text-xs leading-none text-muted-foreground mt-1">
+                {user.user_metadata.age} • {user.user_metadata.gender}
+              </p>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

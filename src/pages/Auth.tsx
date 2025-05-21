@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Auth() {
   const { signIn, signUp, user } = useAuth();
@@ -49,6 +51,8 @@ export default function Auth() {
     const confirmPassword = formData.get("confirmPassword") as string;
     const username = formData.get("username") as string;
     const fullName = formData.get("fullName") as string;
+    const age = formData.get("age") as string;
+    const gender = formData.get("gender") as string;
     
     if (password !== confirmPassword) {
       toast({
@@ -63,7 +67,9 @@ export default function Auth() {
     try {
       await signUp(email, password, {
         username,
-        full_name: fullName
+        full_name: fullName,
+        age: Number(age),
+        gender
       });
       // Don't navigate - user should check email for confirmation
     } catch (error) {
@@ -122,6 +128,38 @@ export default function Auth() {
                 <div className="space-y-2">
                   <Label htmlFor="fullName">Full Name</Label>
                   <Input id="fullName" name="fullName" placeholder="Your full name" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="age">Age</Label>
+                  <Select name="age" required>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your age" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 83 }, (_, i) => i + 18).map((age) => (
+                        <SelectItem key={age} value={age.toString()}>
+                          {age}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender</Label>
+                  <RadioGroup name="gender" defaultValue="male" className="flex space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="male" id="male" />
+                      <Label htmlFor="male">Male</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="female" id="female" />
+                      <Label htmlFor="female">Female</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="other" id="other" />
+                      <Label htmlFor="other">Other</Label>
+                    </div>
+                  </RadioGroup>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
