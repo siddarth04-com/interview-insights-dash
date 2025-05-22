@@ -22,16 +22,27 @@ export default function Interview() {
   return (
     <div className="min-h-screen bg-background">
       <InterviewInterface examType={examType} />
+      <AnalysisLink />
     </div>
   );
 }
 
 function AnalysisLink() {
+  // Get the most recent session from localStorage
+  const getSampleSessionId = () => {
+    const savedSessions = JSON.parse(localStorage.getItem('interviewSessions') || '[]');
+    if (savedSessions.length > 0) {
+      // Return the most recent session
+      return savedSessions[savedSessions.length - 1].id;
+    }
+    return 'sample-session'; // Default sample session
+  };
+
   return (
-    <div className="mt-4 text-center">
-      <p className="mb-2">Want to see a sample analysis?</p>
-      <Link to="/analysis/sample-session" className="text-primary hover:underline">
-        View Sample Analysis
+    <div className="mt-4 text-center p-2 fixed bottom-0 w-full bg-background/80 backdrop-blur-sm">
+      <p className="mb-2">Want to see analysis of your interviews?</p>
+      <Link to={`/analysis/${getSampleSessionId()}`} className="text-primary hover:underline">
+        View Analysis
       </Link>
     </div>
   );

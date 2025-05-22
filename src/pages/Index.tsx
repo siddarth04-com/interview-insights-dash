@@ -25,8 +25,8 @@ export default function Index() {
             <p>Choose your interview type and practice with AI-generated questions and real-time feedback.</p>
           </CardContent>
           <CardFooter>
-            <Link to="/interview">
-              <Button>Start Interview</Button>
+            <Link to="/interview?type=UPSC">
+              <Button>Start UPSC Interview</Button>
             </Link>
           </CardFooter>
         </Card>
