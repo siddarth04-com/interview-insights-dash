@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -157,8 +158,7 @@ export default function Analysis() {
       } catch (err) {
         console.error("Error fetching session data:", err);
         setError(true);
-        toast({
-          title: "Error loading analysis",
+        toast("Error loading analysis", {
           description: "There was a problem retrieving your interview session data.",
           variant: "destructive",
         });
