@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/sonner";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import SessionSummary from "@/components/Analysis/SessionSummary";
@@ -13,52 +13,7 @@ import VideoReplay from "@/components/Analysis/VideoReplay";
 import PerformanceTrendChart from "@/components/Analysis/PerformanceTrendChart";
 import PersonalizedRecommendations from "@/components/Analysis/PersonalizedRecommendations";
 import AnalysisLoading from "@/components/Analysis/AnalysisLoading";
-
-// Mock fetch function (replace with actual Firebase fetch)
-const fetchSessionData = async (sessionId: string) => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Mock data
-  return {
-    id: sessionId,
-    date: new Date().toISOString(),
-    examType: "UPSC",
-    overallScore: 78,
-    questionsAttempted: 5,
-    duration: "12:35", // MM:SS
-    strengths: ["Subject Knowledge", "Analytical Thinking"],
-    weaknesses: ["Communication Clarity", "Language Accuracy"],
-    categoryScores: {
-      "Subject Knowledge": 85,
-      "Analytical Thinking": 80,
-      "Communication Clarity": 65,
-      "Language Accuracy": 72,
-      "Confidence & Body Language": 68
-    },
-    lostMarksReasons: {
-      "Subject Knowledge": ["Incomplete coverage of topic", "Factual errors"],
-      "Analytical Thinking": ["Lack of critical perspective", "Insufficient examples"],
-      "Communication Clarity": ["Unclear articulation", "Disorganized structure", "Too many fillers"],
-      "Language Accuracy": ["Grammatical errors", "Limited vocabulary"],
-      "Confidence & Body Language": ["Poor eye contact", "Fidgeting", "Monotone delivery"]
-    },
-    improvementSuggestions: [
-      "Practice speaking with clearer articulation and organization of thoughts",
-      "Work on strengthening factual knowledge in key subject areas",
-      "Develop more confident body language and varied vocal delivery"
-    ],
-    hasRecording: true,
-    recordingUrl: "https://example.com/mock-recording.mp4",
-    trendData: [
-      { date: "2025-04-15T10:00:00Z", score: 65 },
-      { date: "2025-04-22T14:30:00Z", score: 68 },
-      { date: "2025-04-30T09:15:00Z", score: 72 },
-      { date: "2025-05-07T16:45:00Z", score: 75 },
-      { date: "2025-05-15T11:20:00Z", score: 78 }
-    ]
-  };
-};
+import PreviousSessionsList from "@/components/Analysis/PreviousSessionsList";
 
 export default function Analysis() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -67,16 +22,18 @@ export default function Analysis() {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<boolean>(false);
+  const [allSessions, setAllSessions] = useState<any[]>([]);
   
   useEffect(() => {
     const fetchSessionData = async () => {
       setIsLoading(true);
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Get all saved sessions
+        const savedSessions = JSON.parse(localStorage.getItem('interviewSessions') || '[]');
+        setAllSessions(savedSessions);
         
-        if (sessionId === 'sample-session') {
-          // Return mock data for sample session
+        if (sessionId === 'sample-session' && savedSessions.length === 0) {
+          // Return mock data only for sample session when no real sessions exist
           setData({
             id: 'sample-session',
             date: new Date().toISOString(),
@@ -84,14 +41,16 @@ export default function Analysis() {
             overallScore: 78,
             questionsAttempted: 5,
             duration: "12:35", // MM:SS
-            strengths: ["Subject Knowledge", "Analytical Thinking"],
-            weaknesses: ["Communication Clarity", "Language Accuracy"],
-            categoryScores: {
-              "Subject Knowledge": 85,
-              "Analytical Thinking": 80,
-              "Communication Clarity": 65,
-              "Language Accuracy": 72,
-              "Confidence & Body Language": 68
+            scores: {
+              strengths: ["Subject Knowledge", "Analytical Thinking"],
+              weaknesses: ["Communication Clarity", "Language Accuracy"],
+              categoryScores: {
+                "Subject Knowledge": 85,
+                "Analytical Thinking": 80,
+                "Communication Clarity": 65,
+                "Language Accuracy": 72,
+                "Confidence & Body Language": 68
+              }
             },
             lostMarksReasons: {
               "Subject Knowledge": ["Incomplete coverage of topic", "Factual errors"],
@@ -105,19 +64,11 @@ export default function Analysis() {
               "Work on strengthening factual knowledge in key subject areas",
               "Develop more confident body language and varied vocal delivery"
             ],
-            hasRecording: true,
-            recordingUrl: "https://example.com/mock-recording.mp4",
-            trendData: [
-              { date: "2025-04-15T10:00:00Z", score: 65 },
-              { date: "2025-04-22T14:30:00Z", score: 68 },
-              { date: "2025-04-30T09:15:00Z", score: 72 },
-              { date: "2025-05-07T16:45:00Z", score: 75 },
-              { date: "2025-05-15T11:20:00Z", score: 78 }
-            ]
+            hasRecording: false,
+            trendData: generateSampleTrendData()
           });
         } else {
-          // Get session from localStorage
-          const savedSessions = JSON.parse(localStorage.getItem('interviewSessions') || '[]');
+          // Get specific session from localStorage
           const session = savedSessions.find((s: any) => s.id === sessionId);
           
           if (!session) {
@@ -125,29 +76,37 @@ export default function Analysis() {
             return;
           }
           
-          // Calculate additional analysis data not stored in the session
-          const questionsAttempted = session.questions.length;
-          const duration = "10:00"; // Mock duration
+          // Calculate additional analysis data
+          const questionsAttempted = session.questions?.length || 0;
+          const responsesGiven = session.responses?.filter((r: string) => r && r.trim().length > 0).length || 0;
           
-          const lostMarksReasons: {[key: string]: string[]} = {};
-          Object.entries(session.scores.categoryScores).forEach(([category, score]: [string, any]) => {
-            // Generate reasons based on score
-            const reasons = generateLostMarksReasons(category, score as number);
-            lostMarksReasons[category] = reasons;
-          });
+          // Calculate duration (if not available)
+          const duration = session.duration || "10:00"; // Default if not recorded
           
-          // Generate improvement suggestions
-          const improvementSuggestions = generateImprovementSuggestions(
-            session.scores.weaknesses, 
-            session.scores.categoryScores
-          );
+          // Generate lost marks reasons if not already available
+          const lostMarksReasons: {[key: string]: string[]} = session.lostMarksReasons || {};
           
-          // Get trend data (real or mocked)
-          const trendData = getTrendData(session.id);
+          if (!session.lostMarksReasons) {
+            Object.entries(session.scores?.categoryScores || {}).forEach(([category, score]: [string, any]) => {
+              // Generate reasons based on score
+              lostMarksReasons[category] = generateLostMarksReasons(category, score as number);
+            });
+          }
+          
+          // Generate improvement suggestions if not available
+          const improvementSuggestions = session.improvementSuggestions || 
+            generateImprovementSuggestions(
+              session.scores?.weaknesses || [], 
+              session.scores?.categoryScores || {}
+            );
+          
+          // Get trend data from all sessions
+          const trendData = getTrendData(savedSessions);
           
           setData({
             ...session,
             questionsAttempted,
+            responsesGiven,
             duration,
             lostMarksReasons,
             improvementSuggestions,
@@ -169,6 +128,18 @@ export default function Analysis() {
     
     fetchSessionData();
   }, [sessionId]);
+
+  // Helper function to generate mock trend data for sample session
+  const generateSampleTrendData = () => {
+    const baseDate = new Date();
+    return [
+      { date: new Date(baseDate.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), score: 65 },
+      { date: new Date(baseDate.getTime() - 21 * 24 * 60 * 60 * 1000).toISOString(), score: 68 },
+      { date: new Date(baseDate.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(), score: 72 },
+      { date: new Date(baseDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(), score: 75 },
+      { date: baseDate.toISOString(), score: 78 }
+    ];
+  };
 
   // Helper function to generate reasons for lost marks
   const generateLostMarksReasons = (category: string, score: number) => {
@@ -211,42 +182,74 @@ export default function Analysis() {
   
   // Helper function to generate improvement suggestions
   const generateImprovementSuggestions = (weaknesses: string[], categoryScores: {[key: string]: number}) => {
-    const suggestions = [
-      "Practice speaking with clearer articulation and organization of thoughts",
-      "Work on strengthening factual knowledge in key subject areas",
-      "Develop more confident body language and varied vocal delivery",
-      "Improve critical thinking by analyzing issues from multiple perspectives",
-      "Enhance language accuracy through regular practice and seeking feedback"
-    ];
+    // Suggestions mapped to categories
+    const categoryBasedSuggestions: {[key: string]: string[]} = {
+      "Subject Knowledge": [
+        "Review core conceptual frameworks related to your exam syllabus",
+        "Practice explaining complex topics in simple language to demonstrate deep understanding",
+        "Create a structured study plan focusing on your weaker subject areas"
+      ],
+      "Analytical Thinking": [
+        "Practice analyzing issues from multiple perspectives before forming conclusions",
+        "Work on connecting theoretical concepts to real-world applications",
+        "Develop the ability to structure complex arguments logically"
+      ],
+      "Communication Clarity": [
+        "Practice organizing your thoughts before speaking using a clear structure",
+        "Record yourself answering questions and analyze your speech patterns",
+        "Reduce filler words by practicing deliberate pauses instead"
+      ],
+      "Language Accuracy": [
+        "Read high-quality publications daily to improve vocabulary and expression",
+        "Practice speaking with proper sentence structure and grammar",
+        "Work on using precise terminology relevant to your field"
+      ],
+      "Confidence & Body Language": [
+        "Practice maintaining eye contact while speaking in front of a mirror",
+        "Work on varying your vocal tone and pace for more engaging delivery",
+        "Practice controlled hand gestures to emphasize key points"
+      ]
+    };
     
-    // Filter based on lowest scoring categories
-    return suggestions.filter((_, index) => index < 3);
+    // Get weakest areas
+    const sortedScores = Object.entries(categoryScores)
+      .sort(([, scoreA], [, scoreB]) => (scoreA as number) - (scoreB as number))
+      .slice(0, 3)
+      .map(([category]) => category);
+    
+    // Combine weaknesses from scores and explicit weaknesses
+    const allWeakAreas = Array.from(new Set([...sortedScores, ...weaknesses]));
+    
+    // Get suggestions based on weak areas
+    const suggestions: string[] = [];
+    allWeakAreas.forEach(area => {
+      const areaSpecificSuggestions = categoryBasedSuggestions[area] || [];
+      // Add one suggestion per area to avoid too many suggestions
+      if (areaSpecificSuggestions.length > 0) {
+        suggestions.push(areaSpecificSuggestions[Math.floor(Math.random() * areaSpecificSuggestions.length)]);
+      }
+    });
+    
+    // Return top 3 unique suggestions
+    return Array.from(new Set(suggestions)).slice(0, 3);
   };
   
   // Helper function to get trend data
-  const getTrendData = (sessionId: string) => {
-    const savedSessions = JSON.parse(localStorage.getItem('interviewSessions') || '[]');
-    
-    // If we have more than 1 session, use real trend data
-    if (savedSessions.length > 1) {
-      return savedSessions
-        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
-        .map((session: any) => ({
-          date: session.date,
-          score: session.overallScore
-        }));
+  const getTrendData = (allSessions: any[]) => {
+    if (allSessions.length <= 1) {
+      return sessionId === 'sample-session' ? generateSampleTrendData() : [{
+        date: new Date().toISOString(),
+        score: allSessions[0]?.overallScore || 70
+      }];
     }
     
-    // Otherwise, generate mock trend data
-    const baseDate = new Date();
-    return [
-      { date: new Date(baseDate.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(), score: 65 },
-      { date: new Date(baseDate.getTime() - 21 * 24 * 60 * 60 * 1000).toISOString(), score: 68 },
-      { date: new Date(baseDate.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(), score: 72 },
-      { date: new Date(baseDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(), score: 75 },
-      { date: new Date().toISOString(), score: sessionId === 'sample-session' ? 78 : 
-        savedSessions.find((s: any) => s.id === sessionId)?.overallScore || 78 }
-    ];
+    // Sort sessions by date
+    return allSessions
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map(session => ({
+        date: session.date,
+        score: session.overallScore
+      }));
   };
 
   if (isLoading) {
@@ -279,12 +282,12 @@ export default function Analysis() {
         <h1 className="text-3xl font-bold">Interview Analysis</h1>
       </div>
       
-      <p className="text-muted-foreground mb-8">
+      <p className="text-muted-foreground mb-6">
         {data.examType} Interview Session - {new Date(data.date).toLocaleDateString()}
       </p>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-6 gap-2">
+        <TabsList className="grid grid-cols-2 md:grid-cols-7 gap-2">
           <TabsTrigger value="summary">Summary</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
@@ -293,6 +296,10 @@ export default function Analysis() {
             <TabsTrigger value="replay">Replay</TabsTrigger>
           )}
           <TabsTrigger value="trends">Trends</TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-1">
+            <History className="h-4 w-4" />
+            <span className="hidden sm:inline">History</span>
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="summary" className="space-y-4">
@@ -300,29 +307,29 @@ export default function Analysis() {
             overallScore={data.overallScore}
             questionsAttempted={data.questionsAttempted}
             duration={data.duration}
-            strengths={data.scores?.strengths || data.strengths}
-            weaknesses={data.scores?.weaknesses || data.weaknesses}
+            strengths={data.scores?.strengths || data.strengths || []}
+            weaknesses={data.scores?.weaknesses || data.weaknesses || []}
           />
         </TabsContent>
         
         <TabsContent value="categories" className="space-y-4">
           <CategoryAnalysis 
-            scores={data.scores?.categoryScores || data.categoryScores}
-            lostMarksReasons={data.lostMarksReasons}
+            scores={data.scores?.categoryScores || data.categoryScores || {}}
+            lostMarksReasons={data.lostMarksReasons || {}}
           />
         </TabsContent>
         
         <TabsContent value="feedback" className="space-y-4">
           <FeedbackSuggestions 
-            suggestions={data.improvementSuggestions}
-            scores={data.scores?.categoryScores || data.categoryScores}
+            suggestions={data.improvementSuggestions || []}
+            scores={data.scores?.categoryScores || data.categoryScores || {}}
           />
         </TabsContent>
         
         <TabsContent value="recommendations" className="space-y-4">
           <PersonalizedRecommendations 
-            categoryScores={data.scores?.categoryScores || data.categoryScores}
-            weaknesses={data.scores?.weaknesses || data.weaknesses}
+            categoryScores={data.scores?.categoryScores || data.categoryScores || {}}
+            weaknesses={data.scores?.weaknesses || data.weaknesses || []}
             overallScore={data.overallScore}
             examType={data.examType}
           />
@@ -335,7 +342,15 @@ export default function Analysis() {
         )}
         
         <TabsContent value="trends" className="space-y-4">
-          <PerformanceTrendChart data={data.trendData} />
+          <PerformanceTrendChart data={data.trendData || []} />
+        </TabsContent>
+        
+        <TabsContent value="history" className="space-y-4">
+          <PreviousSessionsList 
+            sessions={allSessions} 
+            currentSessionId={sessionId || ''}
+            onSessionSelect={(id: string) => navigate(`/analysis/${id}`)}
+          />
         </TabsContent>
       </Tabs>
     </div>
