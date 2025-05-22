@@ -160,7 +160,7 @@ export default function Analysis() {
         setError(true);
         toast("Error loading analysis", {
           description: "There was a problem retrieving your interview session data.",
-          variant: "destructive",
+          className: "bg-destructive text-destructive-foreground",
         });
       } finally {
         setIsLoading(false);
