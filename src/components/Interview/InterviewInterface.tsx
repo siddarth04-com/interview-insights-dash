@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -226,6 +225,12 @@ export default function InterviewInterface({ examType }: InterviewInterfaceProps
       // End of interview
       endInterview();
     }
+  };
+
+  // Skip the timer and proceed to next question
+  const handleSkipTimer = () => {
+    setTimeLeft(0);
+    toast.info("Timer skipped.");
   };
 
   // End the interview session
@@ -466,9 +471,19 @@ export default function InterviewInterface({ examType }: InterviewInterfaceProps
           ) : (
             <div className="flex flex-col gap-4 h-full">
               {/* Timer display */}
-              <div className="flex items-center gap-2 mb-2">
-                <Timer className="h-5 w-5" />
-                <div className="text-xl font-mono">{formatTime(timeLeft)}</div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Timer className="h-5 w-5" />
+                  <div className="text-xl font-mono">{formatTime(timeLeft)}</div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSkipTimer}
+                  disabled={isPaused}
+                >
+                  Skip Timer
+                </Button>
               </div>
               
               {/* Progress indicator */}
