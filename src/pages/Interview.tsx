@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import InterviewInterface from "@/components/Interview/InterviewInterface";
@@ -25,3 +24,16 @@ export default function Interview() {
     </div>
   );
 }
+
+function AnalysisLink() {
+  return (
+    <div className="mt-4 text-center">
+      <p className="mb-2">Want to see a sample analysis?</p>
+      <Link to="/analysis/sample-session" className="text-primary hover:underline">
+        View Sample Analysis
+      </Link>
+    </div>
+  );
+}
+
+export { AnalysisLink };
