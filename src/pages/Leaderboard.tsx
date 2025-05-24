@@ -37,22 +37,74 @@ const Leaderboard = () => {
     }
   }, [session, user, navigate]);
 
-  // Fetch leaderboard data
+  // Fetch leaderboard data using a direct query instead of the view
   const { data: leaderboardData = [], isLoading, error } = useQuery({
     queryKey: ['leaderboard'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('leaderboard_view')
+      // First, get all users with their settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('user_leaderboard_settings')
         .select('*')
-        .eq('is_public', true)
-        .order('average_score', { ascending: false });
+        .eq('is_public', true);
       
-      if (error) {
-        console.error('Error fetching leaderboard:', error);
-        throw error;
+      if (settingsError) {
+        console.error('Error fetching leaderboard settings:', settingsError);
+        throw settingsError;
       }
-      
-      return data as LeaderboardUser[];
+
+      if (!settingsData || settingsData.length === 0) {
+        return [];
+      }
+
+      // Get user IDs from public settings
+      const publicUserIds = settingsData.map(setting => setting.user_id);
+
+      // Get interview data for public users
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('interview_sessions')
+        .select('user_id, overall_score, completed_at')
+        .in('user_id', publicUserIds);
+
+      if (sessionsError) {
+        console.error('Error fetching interview sessions:', sessionsError);
+        throw sessionsError;
+      }
+
+      // Process the data to create leaderboard entries
+      const leaderboardMap = new Map();
+
+      // Initialize with settings data
+      settingsData.forEach(setting => {
+        leaderboardMap.set(setting.user_id, {
+          user_id: setting.user_id,
+          display_name: setting.display_name || 'Anonymous User',
+          is_public: setting.is_public,
+          average_score: 0,
+          interviews_taken: 0,
+          last_interview: null
+        });
+      });
+
+      // Add session data
+      if (sessionsData) {
+        sessionsData.forEach(session => {
+          const entry = leaderboardMap.get(session.user_id);
+          if (entry) {
+            entry.interviews_taken += 1;
+            entry.average_score = ((entry.average_score * (entry.interviews_taken - 1)) + session.overall_score) / entry.interviews_taken;
+            if (!entry.last_interview || session.completed_at > entry.last_interview) {
+              entry.last_interview = session.completed_at;
+            }
+          }
+        });
+      }
+
+      // Filter out users with no interviews and sort by average score
+      const result = Array.from(leaderboardMap.values())
+        .filter(user => user.interviews_taken > 0)
+        .sort((a, b) => b.average_score - a.average_score);
+
+      return result as LeaderboardUser[];
     },
     enabled: !!session,
   });
@@ -63,18 +115,48 @@ const Leaderboard = () => {
     queryFn: async () => {
       if (!user?.id) return null;
       
-      const { data, error } = await supabase
-        .from('leaderboard_view')
+      // Get user's settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('user_leaderboard_settings')
         .select('*')
         .eq('user_id', user.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching current user data:', error);
-        throw error;
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.error('Error fetching current user settings:', settingsError);
+        return null;
       }
-      
-      return data as LeaderboardUser | null;
+
+      // Get user's interview sessions
+      const { data: sessionsData, error: sessionsError } = await supabase
+        .from('interview_sessions')
+        .select('overall_score, completed_at')
+        .eq('user_id', user.id);
+
+      if (sessionsError) {
+        console.error('Error fetching current user sessions:', sessionsError);
+        return null;
+      }
+
+      if (!sessionsData || sessionsData.length === 0) {
+        return null;
+      }
+
+      // Calculate user's stats
+      const averageScore = sessionsData.reduce((sum, session) => sum + session.overall_score, 0) / sessionsData.length;
+      const lastInterview = sessionsData.reduce((latest, session) => 
+        session.completed_at > latest ? session.completed_at : latest, 
+        sessionsData[0].completed_at
+      );
+
+      return {
+        user_id: user.id,
+        display_name: settingsData?.display_name || 'You',
+        average_score: averageScore,
+        interviews_taken: sessionsData.length,
+        is_public: settingsData?.is_public || false,
+        last_interview: lastInterview
+      } as LeaderboardUser;
     },
     enabled: !!user?.id,
   });
@@ -130,6 +212,7 @@ const Leaderboard = () => {
         <h1 className="text-3xl font-bold mb-8">Leaderboard</h1>
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
           <p className="text-red-700">Failed to load leaderboard data. Please try again later.</p>
+          <p className="text-red-600 text-sm mt-2">Error: {error.message}</p>
         </div>
       </div>
     );
