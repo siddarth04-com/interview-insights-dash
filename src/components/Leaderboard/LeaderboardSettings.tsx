@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,13 +36,15 @@ const LeaderboardSettings = () => {
       return data;
     },
     enabled: !!user?.id,
-    onSuccess: (data) => {
-      if (data) {
-        setDisplayName(data.display_name || '');
-        setIsPublic(data.is_public);
-      }
-    }
   });
+
+  // Update form state when settings data changes
+  useEffect(() => {
+    if (settings) {
+      setDisplayName(settings.display_name || '');
+      setIsPublic(settings.is_public);
+    }
+  }, [settings]);
 
   // Update settings mutation
   const updateSettings = useMutation({
