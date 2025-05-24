@@ -1,181 +1,153 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import LeaderboardTable from "@/components/Leaderboard/LeaderboardTable";
 import LeaderboardSkeleton from "@/components/Leaderboard/LeaderboardSkeleton";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { useNavigate } from "react-router-dom";
 
-// Mock user ID for demonstration (would come from auth in real app)
-const CURRENT_USER_ID = "current_user";
-
-// Define our user data structure
 interface LeaderboardUser {
-  id: string;
-  name: string;
-  averageScore: number;
-  interviewsTaken: number;
-  isPrivate: boolean;
+  user_id: string;
+  display_name: string;
+  average_score: number;
+  interviews_taken: number;
+  is_public: boolean;
+  last_interview: string;
 }
 
 const Leaderboard = () => {
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
-  const [filteredData, setFilteredData] = useState<LeaderboardUser[]>([]);
-  const [currentUserData, setCurrentUserData] = useState<LeaderboardUser | null>(null);
-  const [currentUserRank, setCurrentUserRank] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { user, session } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const { toast } = useToast();
-  
   const itemsPerPage = 10;
-  
-  // Generate leaderboard data from real localStorage sessions
+
+  // Redirect to auth if not logged in
   useEffect(() => {
-    setIsLoading(true);
-    
-    try {
-      // Get all saved sessions from localStorage
-      const savedSessions = JSON.parse(localStorage.getItem('interviewSessions') || '[]');
-      
-      if (savedSessions.length === 0) {
-        // No real sessions, show empty state
-        setLeaderboardData([]);
-        setFilteredData([]);
-        setCurrentUserData(null);
-        setCurrentUserRank(null);
-        setIsLoading(false);
-        return;
-      }
-      
-      // Group sessions by user (for now, all sessions are from current user)
-      // In a real app, this would be grouped by actual user IDs
-      const userSessions = savedSessions;
-      
-      // Calculate current user's stats
-      const totalSessions = userSessions.length;
-      const totalScore = userSessions.reduce((sum: number, session: any) => sum + (session.overallScore || 0), 0);
-      const averageScore = totalSessions > 0 ? totalScore / totalSessions : 0;
-      
-      const currentUser: LeaderboardUser = {
-        id: CURRENT_USER_ID,
-        name: "You",
-        averageScore: averageScore,
-        interviewsTaken: totalSessions,
-        isPrivate: false
-      };
-      
-      // Create sample competitors with slightly lower scores for demonstration
-      // In a real app, this would come from the database
-      const competitors: LeaderboardUser[] = [];
-      
-      // Only add competitors if user has taken interviews
-      if (totalSessions > 0) {
-        const baseScore = Math.max(averageScore - 15, 60); // Competitors around 15 points lower
-        
-        for (let i = 1; i <= 8; i++) {
-          const variance = (Math.random() - 0.5) * 20; // ±10 point variance
-          const competitorScore = Math.min(Math.max(baseScore + variance, 50), 95);
-          
-          competitors.push({
-            id: `competitor_${i}`,
-            name: `User ${i}`,
-            averageScore: competitorScore,
-            interviewsTaken: Math.floor(Math.random() * 20) + 5,
-            isPrivate: Math.random() > 0.7 // 30% chance of being private
-          });
-        }
-      }
-      
-      // Combine current user with competitors
-      const allUsers = [currentUser, ...competitors];
-      
-      // Sort by average score in descending order
-      const sortedData = allUsers.sort((a, b) => b.averageScore - a.averageScore);
-      
-      setLeaderboardData(sortedData);
-      setFilteredData(sortedData);
-      
-      // Find current user position
-      const userRank = sortedData.findIndex(user => user.id === CURRENT_USER_ID) + 1;
-      
-      setCurrentUserData(currentUser);
-      setCurrentUserRank(userRank);
-      setIsLoading(false);
-      
-      if (totalSessions > 0) {
-        toast({
-          title: "Leaderboard updated",
-          description: `Showing rankings based on ${totalSessions} interview session${totalSessions > 1 ? 's' : ''}.`,
-          variant: "default",
-        });
-      } else {
-        toast({
-          title: "No interview data",
-          description: "Complete some interviews to see your ranking.",
-          variant: "default",
-        });
-      }
-      
-    } catch (error) {
-      console.error("Error generating leaderboard data:", error);
-      setError("Failed to load leaderboard data");
-      setIsLoading(false);
-      toast({
-        title: "Error loading data",
-        description: "Could not load leaderboard data",
-        variant: "destructive",
-      });
+    if (!session && !user) {
+      navigate("/auth");
     }
-  }, [toast]);
-  
+  }, [session, user, navigate]);
+
+  // Fetch leaderboard data
+  const { data: leaderboardData = [], isLoading, error } = useQuery({
+    queryKey: ['leaderboard'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leaderboard_view')
+        .select('*')
+        .eq('is_public', true)
+        .order('average_score', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching leaderboard:', error);
+        throw error;
+      }
+      
+      return data as LeaderboardUser[];
+    },
+    enabled: !!session,
+  });
+
+  // Fetch current user's data including private data
+  const { data: currentUserData } = useQuery({
+    queryKey: ['current-user-leaderboard', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('leaderboard_view')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching current user data:', error);
+        throw error;
+      }
+      
+      return data as LeaderboardUser | null;
+    },
+    enabled: !!user?.id,
+  });
+
   // Filter data based on search query
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredData(leaderboardData);
-    } else {
-      const filtered = leaderboardData.filter(user => 
-        user.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredData(filtered);
-      setCurrentPage(1); // Reset to first page on new search
-    }
-  }, [searchQuery, leaderboardData]);
-  
+  const filteredData = leaderboardData.filter(user => 
+    user.display_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentPageData = filteredData.slice(startIndex, endIndex);
-  
+
+  // Find current user rank
+  const currentUserRank = currentUserData ? 
+    leaderboardData.findIndex(u => u.user_id === currentUserData.user_id) + 1 : null;
+
   // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-  
+
+  // Reset page on new search
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  if (!session || !user) {
+    return (
+      <div className="container mx-auto py-8 px-4 md:px-6">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              Please sign in to view the leaderboard and compete with other users.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate("/auth")} className="w-full">
+              Sign In
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="container mx-auto py-8 px-4 md:px-6">
         <h1 className="text-3xl font-bold mb-8">Leaderboard</h1>
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-          <p className="text-red-700">{error} Please try again later.</p>
+          <p className="text-red-700">Failed to load leaderboard data. Please try again later.</p>
         </div>
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto py-8 px-4 md:px-6">
       <h1 className="text-3xl font-bold mb-8">Interview Leaderboard</h1>
       
       {leaderboardData.length === 0 && !isLoading ? (
         <div className="text-center py-12">
-          <h2 className="text-xl font-semibold mb-4">No Interview Data Available</h2>
+          <h2 className="text-xl font-semibold mb-4">No Users on Leaderboard Yet</h2>
           <p className="text-muted-foreground mb-6">
-            Complete some interview sessions to see your ranking on the leaderboard.
+            Be the first to complete an interview and appear on the leaderboard!
           </p>
+          <Button onClick={() => navigate("/interview")}>
+            Start an Interview
+          </Button>
         </div>
       ) : (
         <>
@@ -197,10 +169,16 @@ const Leaderboard = () => {
             <LeaderboardSkeleton />
           ) : (
             <>
-              {/* Top Users */}
+              {/* Leaderboard Table */}
               <LeaderboardTable 
-                users={currentPageData} 
-                currentUserId={CURRENT_USER_ID}
+                users={currentPageData.map((user, index) => ({
+                  id: user.user_id,
+                  name: user.display_name,
+                  averageScore: user.average_score,
+                  interviewsTaken: user.interviews_taken,
+                  isPrivate: !user.is_public
+                }))} 
+                currentUserId={user?.id || ''}
               />
               
               {/* Pagination */}
@@ -235,7 +213,7 @@ const Leaderboard = () => {
                 </Pagination>
               )}
               
-              {/* Current user position (if not in top positions) */}
+              {/* Current user position (if not in top positions and exists) */}
               {currentUserData && currentUserRank && currentUserRank > 10 && (
                 <div className="mt-8">
                   <h2 className="text-xl font-semibold mb-4">Your Position</h2>
@@ -246,11 +224,14 @@ const Leaderboard = () => {
                           {currentUserRank}
                         </div>
                         <div>
-                          <p className="font-semibold">{currentUserData.name} <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full ml-2">You</span></p>
-                          <p className="text-sm text-gray-600">{currentUserData.interviewsTaken} interviews</p>
+                          <p className="font-semibold">
+                            {currentUserData.display_name}
+                            <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full ml-2">You</span>
+                          </p>
+                          <p className="text-sm text-gray-600">{currentUserData.interviews_taken} interviews</p>
                         </div>
                       </div>
-                      <div className="text-xl font-bold">{currentUserData.averageScore.toFixed(1)}%</div>
+                      <div className="text-xl font-bold">{currentUserData.average_score.toFixed(1)}%</div>
                     </div>
                   </div>
                 </div>

@@ -9,6 +9,57 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      interview_sessions: {
+        Row: {
+          clarity_score: number
+          communication_score: number
+          completed_at: string
+          confidence_score: number
+          created_at: string
+          duration_minutes: number
+          id: string
+          interview_type: string
+          overall_score: number
+          questions_answered: number
+          session_name: string
+          technical_score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          clarity_score?: number
+          communication_score?: number
+          completed_at?: string
+          confidence_score?: number
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          interview_type: string
+          overall_score?: number
+          questions_answered?: number
+          session_name: string
+          technical_score?: number
+          total_questions?: number
+          user_id: string
+        }
+        Update: {
+          clarity_score?: number
+          communication_score?: number
+          completed_at?: string
+          confidence_score?: number
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          interview_type?: string
+          overall_score?: number
+          questions_answered?: number
+          session_name?: string
+          technical_score?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -36,6 +87,33 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      user_leaderboard_settings: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          is_public: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_public?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_public?: boolean
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -69,6 +147,13 @@ export type Database = {
             foreignKeyName: "user_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "leaderboard_view"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -76,7 +161,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      leaderboard_view: {
+        Row: {
+          average_score: number | null
+          display_name: string | null
+          interviews_taken: number | null
+          is_public: boolean | null
+          last_interview: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
